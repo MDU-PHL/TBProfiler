@@ -123,7 +123,8 @@ def main_reprofile(args):
     json.dump(new_results,open("%s.results.json"%args.prefix,"w"))
 
 def main_profile(args):
-
+    
+    
     ### Create folders for results if they don't exist ###
     if pp.nofolder(args.dir):
         os.mkdir(args.dir)
@@ -131,7 +132,6 @@ def main_profile(args):
 
 
     args = pp.set_platform_params(args)
-
     ### Create bam file if fastq has been supplied ###
     # bam_file = pp.get_bam_file(args)
 
@@ -202,11 +202,11 @@ def main_update_tbdb(args):
     pp.successlog("Sucessfully updated TBDB")
 
 def main_create_db(args):
-    extra_files = {
-        "spoligotype_spacers": args.spoligotypes
-    }
+    # extra_files = {}
     if args.barcode:
-        extra_files["barcode"] = args.barcode
+        extra_files = {"barcode":args.barcode}
+    else:
+        extra_files = None
     pp.create_db(args,extra_files=extra_files)
 
 
@@ -368,7 +368,7 @@ group.add_argument('--fasta','-f',help='Fasta file')
 group.add_argument('--vcf','-v',help='VCF file')
 input.add_argument('--platform','-m',choices=["illumina","nanopore"],default="illumina",help='NGS Platform used to generate data')
 input.add_argument('--db',default='tbdb',help='Mutation panel name')
-input.add_argument('--external_db',type=str,help='Path to db files prefix (overrides "--db" parameter)')
+input.add_argument('--external_db',type=str,help='Path to db files custom')
 
 output=parser_sub.add_argument_group("Output options")
 output.add_argument('--prefix','-p',default="tbprofiler",help='Sample prefix for all results generated')
@@ -516,12 +516,12 @@ parser_sub.set_defaults(func=main_reformat)
 parser_sub = subparsers.add_parser('create_db', help='Generate the files required to run TBProfiler', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser_sub.add_argument('--prefix','-p',default="tbdb",type=str,help='The input CSV file containing the mutations')
 parser_sub.add_argument('--csv','-c',default="tbdb.csv",type=str,help='The prefix for all output files')
-parser_sub.add_argument('--watchlist','-w',default="tbdb.watchlist.csv",type=str,help='A csv file containing genes to profile but without any specific associated mutations')
-parser_sub.add_argument('--spoligotypes',default="spoligotype_spacers.txt",type=str,help='A file containing a list of spoligotype spacers')
+parser_sub.add_argument('--watchlist','-w',default="",type=str,help='A csv file containing genes to profile but without any specific associated mutations')
+parser_sub.add_argument('--spoligotypes',default="",type=str,help='A file containing a list of spoligotype spacers')
 parser_sub.add_argument('--barcode',default="barcode.bed",type=str,help='A bed file containing lineage barcode SNPs')
 parser_sub.add_argument('--amplicon_primers',type=str,help='A file containing a list of amplicon primers')
 parser_sub.add_argument('--match_ref',type=str,help='The prefix for all output files')
-parser_sub.add_argument('--other_annotations',default="tbdb.other_annotations.csv",type=str,help="A CSV containing gene, mutation, drug and confidence columns")
+parser_sub.add_argument('--other_annotations',default="",type=str,help="A CSV containing gene, mutation, drug and confidence columns")
 parser_sub.add_argument('--custom',action="store_true",help='Tells the script this is a custom database, this is used to alter the generation of the version file')
 parser_sub.add_argument('--db_name',help='Overrides the name of the database in the version file')
 parser_sub.add_argument('--db_commit',help='Overrides the commit string of the database in the version file')
@@ -550,16 +550,16 @@ parser_sub.set_defaults(func=main_version)
 
 
 args = parser.parse_args()
-if hasattr(args, 'func'):
+if hasattr(args, 'func'):    
     args.software_name = __softwarename__
     args.tmp_prefix = str(uuid4())
     args.files_prefix = args.dir+"/"+args.tmp_prefix
-
+    
     if hasattr(args, 'db'):
         if args.db=="tbdb" and not args.external_db and pp.nofile(sys.base_prefix+"/share/tbprofiler/tbdb.fasta"):
             pp.errlog("Can't find the tbdb file at %s. Please run 'tb-profiler update_tbdb' to load the default library or specify another using the '--external_db' flag" % sys.base_prefix,ext=True)
         if args.external_db:
-            args.conf = pp.get_db(args.software_name,args.external_db)
+            args.conf = pp.get_db(args.software_name,args.external_db, args.db)
         else:
             args.conf = pp.get_db(args.software_name,args.db)
 
