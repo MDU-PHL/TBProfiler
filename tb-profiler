@@ -561,7 +561,7 @@ if hasattr(args, 'func'):
         if args.external_db:
             args.conf = pp.get_db(args.software_name,args.external_db, args.db)
         else:
-            args.conf = pp.get_db(args.software_name,args.db)
+            args.conf = pp.get_db(args.software_name,args.db, args.db)
 
     args.func(args)
 else:
